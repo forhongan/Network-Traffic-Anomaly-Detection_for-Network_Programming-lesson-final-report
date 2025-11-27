@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from main import NetworkAnomalyDetector
 import pandas as pd
 from generate_sample_data import generate_sample_data
+from capture_to_csv import capture_to_csv
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -20,6 +21,67 @@ def allowed_file(filename):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/capture_and_analyze', methods=['POST'])
+def capture_and_analyze():
+    try:
+        data = request.json or {}
+        interface = data.get('interface', '')
+        duration = int(data.get('duration', 30))  # 秒
+        bpf = data.get('bpf', 'tcp or udp')
+        max_packets = int(data.get('max_packets', 0))
+        tshark_path = data.get('tshark_path') or None
+
+        if not interface:
+            return jsonify({'error': 'Interface is required'}), 400
+
+        # 生成抓包输出文件（在 uploads 下）
+        timestamp_capture = datetime.now().strftime('%Y%m%d_%H%M%S')
+        capture_filename = f'network_traffic_capture_{timestamp_capture}.csv'
+        capture_path = os.path.join(app.config['UPLOAD_FOLDER'], capture_filename)
+
+        # 抓包（阻塞 duration 秒或直到 max_packets）
+        capture_to_csv(
+            interface=interface,
+            duration=duration,
+            bpf_filter=bpf,
+            output_file=capture_path,
+            max_packets=max_packets,
+            tshark_path=tshark_path,
+        )
+
+        # 复用原有检测流程
+        detector = NetworkAnomalyDetector()
+        df = detector.load_and_preprocess_data(capture_path)
+        df = detector.detect_anomalies(df)
+
+        # 生成可视化
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        detector.visualize_results(df)
+
+        anomaly_count = df['anomaly'].value_counts().get('Anomaly', 0)
+        total_records = len(df)
+
+        if anomaly_count > 0:
+            anomalies_df = df[df['anomaly'] == 'Anomaly'].sort_values('anomaly_score')
+            anomaly_file = os.path.join('outputs', f'anomalies_{timestamp}.csv')
+            anomalies_df.to_csv(anomaly_file, index=False)
+
+        recommendations = detector.get_mitigation_recommendations(df)
+
+        return jsonify({
+            'success': True,
+            'timestamp': timestamp,
+            'capture_filename': capture_filename,
+            'statistics': {
+                'total_records': total_records,
+                'anomaly_count': int(anomaly_count),
+                'anomaly_percentage': round((anomaly_count / total_records) * 100, 2) if total_records else 0,
+            },
+            'recommendations': recommendations
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -141,4 +203,4 @@ def download_sample(filename):
         return jsonify({'error': str(e)}), 404
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(host='0.0.0.0', port=5000, debug=True)

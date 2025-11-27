@@ -246,8 +246,9 @@ Common issues and solutions:
 [MIT License](LICENSE)
 
 ## Contact
-Sunil K khobragade - skhobragade993@gmail.com
-Project Link: https://github.com/naman-mahi/network-traffic-anomaly-detection
+Sunil Khobragade
+Project Link: 
+https://github.com/Naman-mahi
 
 ## Acknowledgments
 - scikit-learn documentation

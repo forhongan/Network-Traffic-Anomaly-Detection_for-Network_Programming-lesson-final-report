@@ -36,6 +36,37 @@
             </div>
         </div>
         
+        <!-- 实时抓包模块 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Capture Real Network Traffic</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="captureInterface" class="form-label">Interface Name</label>
+                            <input type="text" class="form-control" id="captureInterface" placeholder='e.g. "Ethernet" or "Wi-Fi"'>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="captureDuration" class="form-label">Duration (seconds)</label>
+                            <input type="number" class="form-control" id="captureDuration" value="30" min="5" max="600">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="captureFilter" class="form-label">BPF Filter</label>
+                            <input type="text" class="form-control" id="captureFilter" value="tcp or udp">
+                        </div>
+                    </div>
+                </div>
+                <button id="captureBtn" class="btn btn-warning">Capture & Analyze</button>
+                <div id="captureStatus" class="mt-2 d-none">
+                    <div class="alert alert-info">Capturing real network traffic and analyzing...</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Upload Form -->
         <div class="card mb-4">
             <div class="card-body">
@@ -125,4 +156,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
-</html> 
+</html>
