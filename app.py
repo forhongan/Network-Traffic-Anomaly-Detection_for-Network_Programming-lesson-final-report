@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, send_file
+from flask import send_from_directory
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime, timedelta
@@ -201,6 +202,17 @@ def download_sample(filename):
         )
     except Exception as e:
         return jsonify({'error': str(e)}), 404
+
+# Serve Flutter build under /app without replacing existing templates
+FLUTTER_WEB_DIR = os.path.join(os.path.dirname(__file__), 'flutter_frontend', 'build', 'web')
+
+@app.route('/app')
+def flutter_index():
+    return send_from_directory(FLUTTER_WEB_DIR, 'index.html')
+
+@app.route('/app/<path:filename>')
+def flutter_static(filename):
+    return send_from_directory(FLUTTER_WEB_DIR, filename)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
